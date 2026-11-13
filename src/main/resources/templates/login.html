@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Library Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #F7F9FC 0%, #EAF3FA 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 58, 112, 0.12), 0 8px 10px -6px rgba(0, 58, 112, 0.06);
+            overflow: hidden;
+        }
+        .login-header {
+            background: var(--primary-navy);
+            color: #FFFFFF;
+            padding: 2.25rem 2rem 1.75rem 2rem;
+            text-align: center;
+        }
+        .login-logo {
+            width: 54px;
+            height: 54px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .login-body {
+            padding: 2rem;
+        }
+        .demo-pill {
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 9999px;
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+            transition: all 0.15s ease;
+        }
+        .demo-pill:hover {
+            background: var(--light-blue);
+            border-color: var(--secondary-blue);
+            color: var(--primary-navy);
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="login-header">
+        <div class="login-logo">
+            <i class="bi bi-journal-bookmark-fill"></i>
+        </div>
+        <h2 class="h5 fw-bold mb-1">Library Management Portal</h2>
+        <p class="small text-white-50 m-0">Corporate In-Memory Management Platform</p>
+    </div>
+
+    <div class="login-body">
+        <!-- Error / Logout Flash Alerts -->
+        <div th:if="${loginError}" class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${loginError}">Invalid credentials</span>
+        </div>
+
+        <div th:if="${logoutSuccess}" class="alert alert-success py-2 px-3 small d-flex align-items-center mb-3">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${logoutSuccess}">Logged out successfully</span>
+        </div>
+
+        <div th:if="${infoMessage}" class="alert alert-info py-2 px-3 small d-flex align-items-center mb-3">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <span th:text="${infoMessage}">Information</span>
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="mb-3">
+                <label for="usernameInput" class="form-label-custom">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control form-control-custom border-start-0" id="usernameInput" name="username" placeholder="Enter username" required autofocus>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="passwordInput" class="form-label-custom">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-lock"></i></span>
+                    <input type="password" class="form-control form-control-custom border-start-0" id="passwordInput" name="password" placeholder="Enter password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-boeing-primary w-100 justify-content-center py-2 mt-2">
+                <i class="bi bi-box-arrow-in-right"></i> Sign In to Portal
+            </button>
+        </form>
+
+        <!-- Quick Demo Account Fillers -->
+        <div class="mt-4 pt-3 border-top">
+            <div class="text-muted small fw-semibold mb-2 text-center">Quick Demo Credentials (Click to fill):</div>
+            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                <span class="demo-pill" onclick="fillCredentials('admin', 'admin123')">
+                    <strong class="text-primary">Admin:</strong> admin / admin123
+                </span>
+                <span class="demo-pill" onclick="fillCredentials('sarah', 'sarah123')">
+                    <strong class="text-indigo">Librarian:</strong> sarah / sarah123
+                </span>
+                <span class="demo-pill" onclick="fillCredentials('alice', 'alice123')">
+                    <strong class="text-success">Member:</strong> alice / alice123
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fillCredentials(user, pass) {
+        document.getElementById('usernameInput').value = user;
+        document.getElementById('passwordInput').value = pass;
+    }
+</script>
+</body>
+</html>
+

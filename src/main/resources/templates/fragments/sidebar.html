@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <aside th:fragment="sidebar" id="appSidebar" class="app-sidebar">
+        <!-- Brand Header -->
+        <div class="sidebar-header">
+            <a th:href="@{/dashboard}" class="brand-link">
+                <div class="brand-logo-icon">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                </div>
+                <div>
+                    <div class="brand-text">LBMS Portal</div>
+                    <div class="brand-subtext">Enterprise Library</div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Navigation Menu -->
+        <div class="sidebar-content">
+            <div class="sidebar-nav-title">Main Navigation</div>
+            <ul class="sidebar-nav">
+                <!-- Dashboard (All Roles) -->
+                <li class="nav-item">
+                    <a th:href="@{/dashboard}" th:classappend="${activeNav == 'dashboard'} ? 'active'"
+                        class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-grid-1x2-fill"></i></span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <!-- Books Catalog (All Roles) -->
+                <li class="nav-item">
+                    <a th:href="@{/books}" th:classappend="${activeNav == 'books'} ? 'active'" class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-book-half"></i></span>
+                        <span>Books Catalog</span>
+                    </a>
+                </li>
+
+                <!-- Members (Admin & Librarian) -->
+                <li class="nav-item"
+                    th:if="${currentUser != null and (currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN')}">
+                    <a th:href="@{/members}" th:classappend="${activeNav == 'members'} ? 'active'"
+                        class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-people-fill"></i></span>
+                        <span>Members Directory</span>
+                    </a>
+                </li>
+
+                <!-- Staff Librarians (Admin Only) -->
+                <li class="nav-item" th:if="${currentUser != null and currentUser.role == 'ADMIN'}">
+                    <a th:href="@{/librarians}" th:classappend="${activeNav == 'librarians'} ? 'active'"
+                        class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-person-badge-fill"></i></span>
+                        <span>Staff Librarians</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Circulation Management Section (Admin & Librarian) -->
+            <div class="sidebar-nav-title"
+                th:if="${currentUser != null and (currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN')}">
+                Circulation
+            </div>
+            <ul class="sidebar-nav"
+                th:if="${currentUser != null and (currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN')}">
+                <li class="nav-item">
+                    <a th:href="@{/issue-books}" th:classappend="${activeNav == 'issue-books'} ? 'active'"
+                        class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-arrow-up-right-circle-fill"></i></span>
+                        <span>Issue Books</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/return-books}" th:classappend="${activeNav == 'return-books'} ? 'active'"
+                        class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-arrow-down-left-circle-fill"></i></span>
+                        <span>Return Books</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Records & Reports Section -->
+            <div class="sidebar-nav-title">Audit & Reports</div>
+            <ul class="sidebar-nav">
+                <li class="nav-item">
+                    <a th:href="@{/transactions}" th:classappend="${activeNav == 'transactions'} ? 'active'"
+                        class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-receipt-cutoff"></i></span>
+                        <span
+                            th:text="${currentUser != null and currentUser.role == 'MEMBER'} ? 'My Borrowing History' : 'All Transactions'">Transactions</span>
+                    </a>
+                </li>
+                <li class="nav-item"
+                    th:if="${currentUser != null and (currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN')}">
+                    <a th:href="@{/reports}" th:classappend="${activeNav == 'reports'} ? 'active'"
+                        class="nav-link-custom">
+                        <span class="nav-icon"><i class="bi bi-pie-chart-fill"></i></span>
+                        <span>Analytics & Reports</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Sidebar User Footer -->
+        <div class="sidebar-footer" th:if="${currentUser != null}">
+            <div class="user-profile-card">
+                <div class="user-avatar" th:text="${currentUser.name != null and !currentUser.name.isEmpty() ? #strings.substring(currentUser.name, 0, 1) : 'U'}">U</div>
+                <div class="user-info">
+                    <div class="user-name" th:text="${currentUser.name}">User Name</div>
+                    <span class="user-role-badge"
+                        th:classappend="${currentUser.role == 'ADMIN'} ? 'role-admin' : (${currentUser.role == 'LIBRARIAN'} ? 'role-librarian' : 'role-member')"
+                        th:text="${currentUser.role}">ROLE</span>
+                </div>
+                <a th:href="@{/logout}" class="text-danger fs-6" title="Sign Out">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+</body>
+
+</html>

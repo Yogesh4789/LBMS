@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books Catalog - Library Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+    <div class="app-wrapper">
+        <!-- Sidebar Fragment -->
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <div class="app-main">
+            <!-- Top Navbar Fragment -->
+            <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+            <div class="app-content">
+                <!-- Toast Flash Messages -->
+                <div th:if="${successMessage}" class="alert-custom alert-success-custom mb-4">
+                    <i class="bi bi-check-circle-fill fs-5"></i>
+                    <span th:text="${successMessage}">Success</span>
+                </div>
+                <div th:if="${errorMessage}" class="alert-custom alert-danger-custom mb-4">
+                    <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                    <span th:text="${errorMessage}">Error</span>
+                </div>
+                <div th:if="${warningMessage}" class="alert-custom alert-warning-custom mb-4">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <span th:text="${warningMessage}">Warning</span>
+                </div>
+
+                <!-- Page Action Bar & Search / Filter Controls -->
+                <div class="corporate-card mb-4">
+                    <div class="card-body-custom">
+                        <form th:action="@{/books}" method="get" class="row g-3 align-items-end">
+                            <!-- Search Box -->
+                            <div class="col-md-3">
+                                <label class="form-label-custom">Search Keyword</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control form-control-custom border-start-0"
+                                        name="query" th:value="${selectedQuery}" placeholder="Title, author, ISBN..."
+                                        id="clientTableSearch">
+                                </div>
+                            </div>
+
+                            <!-- Category Filter -->
+                            <div class="col-md-2">
+                                <label class="form-label-custom">Category</label>
+                                <select class="form-select form-select-custom" name="category"
+                                    onchange="this.form.submit()">
+                                    <option value="ALL" th:selected="${selectedCategory == 'ALL'}">All Categories
+                                    </option>
+                                    <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"
+                                        th:selected="${selectedCategory == cat}">Category</option>
+                                </select>
+                            </div>
+
+                            <!-- Availability Filter -->
+                            <div class="col-md-2">
+                                <label class="form-label-custom">Availability</label>
+                                <select class="form-select form-select-custom" name="availability"
+                                    onchange="this.form.submit()">
+                                    <option value="ALL" th:selected="${selectedAvailability == 'ALL'}">All Availability
+                                    </option>
+                                    <option value="AVAILABLE" th:selected="${selectedAvailability == 'AVAILABLE'}">In
+                                        Stock Only</option>
+                                    <option value="OUT_OF_STOCK"
+                                        th:selected="${selectedAvailability == 'OUT_OF_STOCK'}">Out of Stock</option>
+                                </select>
+                            </div>
+
+                            <!-- Sort By Comparator -->
+                            <div class="col-md-2">
+                                <label class="form-label-custom">Sort Criteria</label>
+                                <select class="form-select form-select-custom" name="sortBy"
+                                    onchange="this.form.submit()">
+                                    <option value="title" th:selected="${selectedSort == 'title'}">Title (A - Z)
+                                    </option>
+                                    <option value="author" th:selected="${selectedSort == 'author'}">Author (A - Z)
+                                    </option>
+                                    <option value="year" th:selected="${selectedSort == 'year'}">Year (Newest First)
+                                    </option>
+                                </select>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="col-md-3 d-flex gap-2 justify-content-end">
+                                <a th:href="@{/books}" class="btn btn-boeing-secondary" title="Reset Filters">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                </a>
+                                <button type="button" class="btn btn-boeing-primary" data-bs-toggle="modal"
+                                    data-bs-target="#addBookModal"
+                                    th:if="${currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN'}">
+                                    <i class="bi bi-plus-lg"></i> Add Book
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Books Data Table -->
+                <div class="corporate-card">
+                    <div class="card-header-custom">
+                        <span class="card-title-custom">
+                            <i class="bi bi-journals text-primary"></i> Inventory Records (<span
+                                th:text="${books.size()}">0</span>)
+                        </span>
+                        <span class="text-muted small">Showing live in-memory catalog</span>
+                    </div>
+                    <div class="card-body-custom p-0">
+                        <div class="table-responsive-custom">
+                            <table class="corporate-table">
+                                <thead>
+                                    <tr>
+                                        <th>Book ID</th>
+                                        <th>ISBN</th>
+                                        <th>Title</th>
+                                        <th>Author</th>
+                                        <th>Category</th>
+                                        <th>Year</th>
+                                        <th>Copies (Avail/Total)</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="booksTableBody">
+                                    <tr th:each="book : ${books}">
+                                        <td class="fw-bold" th:text="${book.bookId}">BK001</td>
+                                        <td class="font-monospace small" th:text="${book.isbn}">9780134685991</td>
+                                        <td>
+                                            <div class="fw-semibold text-primary" th:text="${book.title}">Effective Java
+                                            </div>
+                                            <small class="text-muted" th:text="${book.publisher}">Addison-Wesley</small>
+                                        </td>
+                                        <td th:text="${book.author}">Joshua Bloch</td>
+                                        <td><span class="badge bg-light text-dark border"
+                                                th:text="${book.category}">Programming</span></td>
+                                        <td th:text="${book.publicationYear > 0 ? book.publicationYear : '-'}">2018</td>
+                                        <td>
+                                            <span class="fw-bold"
+                                                th:classappend="${book.availableCopies > 0} ? 'text-success' : 'text-danger'"
+                                                th:text="${book.availableCopies} + ' / ' + ${book.totalCopies}">5 /
+                                                5</span>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge"
+                                                th:classappend="${book.status == 'AVAILABLE'} ? 'badge-available' : 'badge-out-of-stock'"
+                                                th:text="${book.status}">AVAILABLE</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group">
+                                                <!-- View Details -->
+                                                <button type="button" class="btn btn-sm btn-boeing-secondary py-1 px-2"
+                                                    th:data-isbn="${book.isbn}"
+                                                    th:data-title="${book.title}"
+                                                    th:data-author="${book.author}"
+                                                    th:data-publisher="${book.publisher}"
+                                                    th:data-category="${book.category}"
+                                                    th:data-year="${book.publicationYear}"
+                                                    th:data-total="${book.totalCopies}"
+                                                    th:data-available="${book.availableCopies}"
+                                                    th:data-status="${book.status}"
+                                                    onclick="openViewBookModalFromBtn(this)"
+                                                    title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+
+                                                <!-- Edit Book (Admin/Librarian) -->
+                                                <button type="button" class="btn btn-sm btn-boeing-secondary py-1 px-2"
+                                                    th:if="${currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN'}"
+                                                    th:data-isbn="${book.isbn}"
+                                                    th:data-title="${book.title}"
+                                                    th:data-author="${book.author}"
+                                                    th:data-publisher="${book.publisher}"
+                                                    th:data-category="${book.category}"
+                                                    th:data-year="${book.publicationYear}"
+                                                    th:data-total="${book.totalCopies}"
+                                                    onclick="openEditBookModalFromBtn(this)"
+                                                    title="Edit Book">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+
+                                                <!-- Delete Book (Admin only) -->
+                                                <button type="button" class="btn btn-sm btn-boeing-danger py-1 px-2"
+                                                    th:if="${currentUser.role == 'ADMIN'}"
+                                                    th:data-isbn="${book.isbn}"
+                                                    th:data-title="${book.title}"
+                                                    onclick="openDeleteBookModalFromBtn(this)"
+                                                    title="Delete Book">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${books.empty}">
+                                        <td colspan="9" class="text-center text-muted py-4">No books match your filter
+                                            criteria.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Fragment -->
+            <div th:replace="~{fragments/footer :: footer}"></div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+     MODAL: Add Book
+     ========================================================================= -->
+    <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/books/add}" method="post">
+                    <div class="modal-header modal-header-corporate">
+                        <h5 class="modal-title modal-title-corporate" id="addBookModalLabel">
+                            <i class="bi bi-plus-circle me-1"></i> Add New Book to Catalog
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label-custom">ISBN (Must be unique) <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom" name="isbn"
+                                placeholder="e.g. 9780134685991" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Book Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom" name="title"
+                                placeholder="e.g. Effective Java" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Author <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom" name="author"
+                                placeholder="e.g. Joshua Bloch" required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label-custom">Publisher</label>
+                                <input type="text" class="form-control form-control-custom" name="publisher"
+                                    placeholder="Publisher name">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-custom">Category</label>
+                                <input type="text" class="form-control form-control-custom" name="category"
+                                    placeholder="e.g. Programming">
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label-custom">Publication Year</label>
+                                <input type="number" class="form-control form-control-custom" name="publicationYear"
+                                    placeholder="2020" min="1800" max="2099">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-custom">Total Copies <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control form-control-custom" name="totalCopies"
+                                    value="1" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-boeing-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-boeing-primary">Save Book</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+     MODAL: Edit Book
+     ========================================================================= -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/books/edit}" method="post">
+                    <input type="hidden" name="isbn" id="editIsbn">
+                    <div class="modal-header modal-header-corporate">
+                        <h5 class="modal-title modal-title-corporate">
+                            <i class="bi bi-pencil-square me-1"></i> Edit Book Details
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label-custom">Book Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom" name="title" id="editTitle"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">Author <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom" name="author" id="editAuthor"
+                                required>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label-custom">Publisher</label>
+                                <input type="text" class="form-control form-control-custom" name="publisher"
+                                    id="editPublisher">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-custom">Category</label>
+                                <input type="text" class="form-control form-control-custom" name="category"
+                                    id="editCategory">
+                            </div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label-custom">Publication Year</label>
+                                <input type="number" class="form-control form-control-custom" name="publicationYear"
+                                    id="editPublicationYear">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label-custom">Total Copies <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control form-control-custom" name="totalCopies"
+                                    id="editTotalCopies" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-boeing-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-boeing-primary">Update Book</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+     MODAL: View Details
+     ========================================================================= -->
+    <div class="modal fade" id="viewBookModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header modal-header-corporate">
+                    <h5 class="modal-title modal-title-corporate"><i class="bi bi-info-circle me-1"></i> Book Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <h5 id="viewTitle" class="fw-bold text-primary mb-1">Title</h5>
+                    <p id="viewAuthor" class="text-muted mb-3">Author</p>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-muted small">ISBN:</div>
+                            <div id="viewIsbn" class="font-monospace fw-semibold">ISBN</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Category:</div>
+                            <div id="viewCategory" class="fw-semibold">Category</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Publisher:</div>
+                            <div id="viewPublisher" class="fw-semibold">Publisher</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Publication Year:</div>
+                            <div id="viewYear" class="fw-semibold">Year</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Copy Inventory:</div>
+                            <div id="viewCopies" class="fw-bold text-success">Avail / Total</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">Status:</div>
+                            <div id="viewStatus" class="fw-bold">Status</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-boeing-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+     MODAL: Delete Confirmation
+     ========================================================================= -->
+    <div class="modal fade" id="deleteBookModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form th:action="@{/books/delete}" method="post">
+                    <input type="hidden" name="isbn" id="deleteIsbn">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-1"></i> Confirm Book
+                            Deletion</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="mb-2">Are you sure you want to permanently remove this title from the library catalog?
+                        </p>
+                        <p class="fw-bold text-danger fs-6" id="deleteBookTitle">Book Title</p>
+                        <small class="text-muted">Note: Books with active loans cannot be removed.</small>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-boeing-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-boeing-danger">Delete Book</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+    <script th:src="@{/js/books.js}"></script>
+</body>
+
+</html>

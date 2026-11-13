@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Books - Library Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <!-- Sidebar Fragment -->
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="app-main">
+        <!-- Top Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="app-content">
+            <!-- Toast Flash Messages -->
+            <div th:if="${successMessage}" class="alert-custom alert-success-custom mb-4">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <span th:text="${successMessage}">Success</span>
+            </div>
+            <div th:if="${errorMessage}" class="alert-custom alert-danger-custom mb-4">
+                <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                <span th:text="${errorMessage}">Error</span>
+            </div>
+
+            <div class="row">
+                <!-- Left Form Column -->
+                <div class="col-lg-8">
+                    <div class="corporate-card">
+                        <div class="card-header-custom">
+                            <span class="card-title-custom">
+                                <i class="bi bi-arrow-up-right-circle text-primary"></i> Issue Book to Member
+                            </span>
+                            <span class="badge bg-light text-dark border">Circulation Desk</span>
+                        </div>
+                        <div class="card-body-custom p-4">
+                            <form th:action="@{/issue-books}" method="post" id="issueBookForm">
+                                <!-- 1. Select Member -->
+                                <div class="mb-4">
+                                    <label class="form-label-custom">Select Registered Member <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-custom" name="memberId" id="memberSelect" required>
+                                        <option value="" disabled selected>-- Choose member from directory --</option>
+                                        <option th:each="member : ${activeMembers}"
+                                                th:value="${member.userId}"
+                                                th:text="${member.name} + ' (' + ${member.userId} + ') - ' + ${member.email}">
+                                            Member Name
+                                        </option>
+                                    </select>
+                                    <div class="form-text text-muted">Only active members within their 3-book loan limit are eligible.</div>
+                                </div>
+
+                                <!-- 2. Select Book -->
+                                <div class="mb-4">
+                                    <label class="form-label-custom">Select Available Book <span class="text-danger">*</span></label>
+                                    <select class="form-select form-select-custom" name="isbn" id="bookSelect" required>
+                                        <option value="" disabled selected>-- Choose available title from catalog --</option>
+                                        <option th:each="book : ${availableBooks}"
+                                                th:value="${book.isbn}"
+                                                th:text="${book.title} + ' by ' + ${book.author} + ' (' + ${book.availableCopies} + ' copies available)'">
+                                            Book Title
+                                        </option>
+                                    </select>
+                                    <div class="form-text text-muted">Out-of-stock titles are automatically excluded from circulation.</div>
+                                </div>
+
+                                <!-- 3. Loan Parameters -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Issue Date</label>
+                                        <input type="text" class="form-control form-control-custom bg-light" th:value="${todayDate}" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-custom">Borrowing Period (Days)</label>
+                                        <input type="number" class="form-control form-control-custom" name="borrowingDays" id="borrowingDays"
+                                               th:value="${defaultDays}" min="1" max="60" required>
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Calculated Due Date Banner -->
+                                <div class="p-3 mb-4 rounded border bg-light d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="text-muted small">Calculated Due Date:</div>
+                                        <div class="fw-bold text-primary fs-6" id="calculatedDueDateDisplay">
+                                            <span th:text="${defaultDueDate}">Due Date</span> (14 days loan)
+                                        </div>
+                                    </div>
+                                    <span class="status-badge badge-available">Standard Policy</span>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                                    <button type="reset" class="btn btn-boeing-secondary">Reset Form</button>
+                                    <button type="submit" class="btn btn-boeing-primary">
+                                        <i class="bi bi-check-circle-fill"></i> Confirm & Issue Book
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Policy & Guidance Column -->
+                <div class="col-lg-4">
+                    <div class="corporate-card">
+                        <div class="card-header-custom">
+                            <span class="card-title-custom">
+                                <i class="bi bi-shield-check text-success"></i> Circulation Rules
+                            </span>
+                        </div>
+                        <div class="card-body-custom">
+                            <ul class="list-unstyled d-flex flex-direction-column gap-3 mb-0 small">
+                                <li class="d-flex gap-2">
+                                    <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                                    <div>
+                                        <strong>Maximum 3 Books:</strong>
+                                        <p class="text-muted m-0">A member cannot borrow more than 3 active books concurrently.</p>
+                                    </div>
+                                </li>
+                                <li class="d-flex gap-2">
+                                    <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                                    <div>
+                                        <strong>14-Day Loan Duration:</strong>
+                                        <p class="text-muted m-0">Standard borrowing window is 14 days unless custom days are authorized.</p>
+                                    </div>
+                                </li>
+                                <li class="d-flex gap-2">
+                                    <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                                    <div>
+                                        <strong>Rs. 5/Day Overdue Fine:</strong>
+                                        <p class="text-muted m-0">Automated fine accrual applies to books returned after the agreed due date.</p>
+                                    </div>
+                                </li>
+                                <li class="d-flex gap-2">
+                                    <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                                    <div>
+                                        <strong>Duplicate Prevention:</strong>
+                                        <p class="text-muted m-0">A member cannot hold multiple active copies of the same ISBN.</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Fragment -->
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+<script th:src="@{/js/borrowing.js}"></script>
+</body>
+</html>
+

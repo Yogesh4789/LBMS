@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Librarians - Library Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <!-- Sidebar Fragment -->
+    <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="app-main">
+        <!-- Top Navbar Fragment -->
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <div class="app-content">
+            <!-- Toast Flash Messages -->
+            <div th:if="${successMessage}" class="alert-custom alert-success-custom mb-4">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <span th:text="${successMessage}">Success</span>
+            </div>
+            <div th:if="${errorMessage}" class="alert-custom alert-danger-custom mb-4">
+                <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                <span th:text="${errorMessage}">Error</span>
+            </div>
+
+            <!-- Page Action Bar & Search -->
+            <div class="corporate-card mb-4">
+                <div class="card-body-custom">
+                    <form th:action="@{/librarians}" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label class="form-label-custom">Search Staff Librarians</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control form-control-custom border-start-0" name="query"
+                                       th:value="${selectedQuery}" placeholder="Search name, ID, username, email...">
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 d-flex gap-2 justify-content-end">
+                            <button type="submit" class="btn btn-boeing-secondary">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <a th:href="@{/librarians}" class="btn btn-boeing-secondary" title="Reset">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </a>
+                            <button type="button" class="btn btn-boeing-primary" data-bs-toggle="modal" data-bs-target="#addLibrarianModal">
+                                <i class="bi bi-person-plus-fill"></i> Add Librarian
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Librarians Data Table -->
+            <div class="corporate-card">
+                <div class="card-header-custom">
+                    <span class="card-title-custom">
+                        <i class="bi bi-person-badge-fill text-primary"></i> Staff Librarians (<span th:text="${librarians.size()}">0</span>)
+                    </span>
+                    <span class="text-muted small">Admin-Restricted Portal</span>
+                </div>
+                <div class="card-body-custom p-0">
+                    <div class="table-responsive-custom">
+                        <table class="corporate-table">
+                            <thead>
+                            <tr>
+                                <th>Librarian ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Username</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="lib : ${librarians}">
+                                <td class="fw-bold font-monospace" th:text="${lib.userId}">LIB001</td>
+                                <td class="fw-semibold text-primary" th:text="${lib.name}">Sarah Connor</td>
+                                <td th:text="${lib.email}">sarah@library.com</td>
+                                <td class="font-monospace" th:text="${lib.username}">sarah</td>
+                                <td>
+                                    <span class="status-badge badge-active" th:text="${lib.status}">ACTIVE</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        <!-- Edit Librarian -->
+                                        <button type="button" class="btn btn-sm btn-boeing-secondary py-1 px-2"
+                                                th:data-id="${lib.userId}"
+                                                th:data-name="${lib.name}"
+                                                th:data-email="${lib.email}"
+                                                onclick="openEditLibModalFromBtn(this)"
+                                                title="Edit Librarian">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+
+                                        <!-- Remove Librarian -->
+                                        <button type="button" class="btn btn-sm btn-boeing-danger py-1 px-2"
+                                                th:data-id="${lib.userId}"
+                                                th:data-name="${lib.name}"
+                                                onclick="openDeleteLibModalFromBtn(this)"
+                                                title="Remove Librarian">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${librarians.empty}">
+                                <td colspan="6" class="text-center text-muted py-4">No staff librarians found.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Fragment -->
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     MODAL: Add Librarian
+     ========================================================================= -->
+<div class="modal fade" id="addLibrarianModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form th:action="@{/librarians/add}" method="post">
+                <div class="modal-header modal-header-corporate">
+                    <h5 class="modal-title modal-title-corporate">
+                        <i class="bi bi-person-plus-fill me-1"></i> Add Staff Librarian
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label-custom">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-custom" name="name" placeholder="Staff Name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label-custom">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control form-control-custom" name="email" placeholder="staff@centrallibrary.edu" required>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label-custom">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom" name="username" placeholder="username" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-custom">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control form-control-custom" name="password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-boeing-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-boeing-primary">Save Librarian</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     MODAL: Edit Librarian
+     ========================================================================= -->
+<div class="modal fade" id="editLibrarianModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form th:action="@{/librarians/edit}" method="post">
+                <input type="hidden" name="librarianId" id="editLibId">
+                <div class="modal-header modal-header-corporate">
+                    <h5 class="modal-title modal-title-corporate">
+                        <i class="bi bi-pencil-square me-1"></i> Edit Librarian Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label-custom">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-custom" name="name" id="editLibName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label-custom">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control form-control-custom" name="email" id="editLibEmail" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-boeing-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-boeing-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================
+     MODAL: Delete Librarian
+     ========================================================================= -->
+<div class="modal fade" id="deleteLibrarianModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form th:action="@{/librarians/delete}" method="post">
+                <input type="hidden" name="librarianId" id="deleteLibId">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-1"></i> Remove Staff Librarian</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="mb-2">Are you sure you want to remove librarian staff account for:</p>
+                    <p class="fw-bold fs-6 text-danger" id="deleteLibName">Staff Name</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-boeing-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-boeing-danger">Remove Staff</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+<script>
+    function openEditLibModalFromBtn(btn) {
+        if (!btn || !btn.dataset) return;
+        openEditLibModal(btn.dataset.id, btn.dataset.name, btn.dataset.email);
+    }
+    function openDeleteLibModalFromBtn(btn) {
+        if (!btn || !btn.dataset) return;
+        openDeleteLibModal(btn.dataset.id, btn.dataset.name);
+    }
+    function openEditLibModal(id, name, email) {
+        document.getElementById('editLibId').value = id;
+        document.getElementById('editLibName').value = name;
+        document.getElementById('editLibEmail').value = email;
+        new bootstrap.Modal(document.getElementById('editLibrarianModal')).show();
+    }
+    function openDeleteLibModal(id, name) {
+        document.getElementById('deleteLibId').value = id;
+        document.getElementById('deleteLibName').textContent = name;
+        new bootstrap.Modal(document.getElementById('deleteLibrarianModal')).show();
+    }
+</script>
+</body>
+</html>
+

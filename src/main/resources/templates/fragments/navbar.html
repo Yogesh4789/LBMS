@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <header th:fragment="navbar" class="app-navbar">
+        <div class="nav-left">
+            <button class="btn btn-sm btn-outline-secondary d-lg-none" id="mobileSidebarToggle" type="button">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div>
+                <!-- Breadcrumb Trail (Hierarchy for inner pages) -->
+                <div class="breadcrumb-nav" th:if="${activeNav != 'dashboard'}">
+                    <a th:href="@{/dashboard}"><i class="bi bi-house-door-fill me-1"></i>Home</a>
+                    <span class="text-muted">/</span>
+                    <span th:text="${breadcrumbCategory != null ? breadcrumbCategory : 'Portal'}">Category</span>
+                </div>
+                <!-- Page Title -->
+                <h1 class="page-title m-0" th:text="${pageTitle}">Executive Dashboard</h1>
+                <!-- Dashboard Subtitle -->
+                <div class="breadcrumb-nav text-muted" th:if="${activeNav == 'dashboard'}">
+                    <i class="bi bi-speedometer2 me-1"></i>Live Institutional Operations
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-right">
+            <!-- Search Shortcut Bar -->
+            <form th:action="@{/books}" method="get" class="nav-search-bar d-none d-md-block">
+                <i class="bi bi-search nav-search-icon"></i>
+                <input type="text" name="query" id="globalSearchInput" placeholder="Quick search catalog... (Ctrl+K)">
+            </form>
+
+            <!-- Current User Profile Dropdown -->
+            <div class="dropdown" th:if="${currentUser != null}">
+                <button class="btn btn-sm btn-boeing-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <i class="bi bi-person-circle"></i>
+                    <span class="d-none d-sm-inline" th:text="${currentUser.name}">User</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li class="dropdown-header">
+                        <span class="fw-bold" th:text="${currentUser.name}">User</span><br>
+                        <small class="text-muted" th:text="${currentUser.email}">user@library.edu</small>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li>
+                        <span class="dropdown-item-text">
+                            Role: <span class="badge bg-primary" th:text="${currentUser.role}">ROLE</span>
+                        </span>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li>
+                        <a class="dropdown-item text-danger" th:href="@{/logout}">
+                            <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+</body>
+
+</html>

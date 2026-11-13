@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Library Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+
+<body>
+
+    <div class="app-wrapper">
+        <!-- Sidebar Fragment -->
+        <div th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+        <!-- Main Content Area -->
+        <div class="app-main">
+            <!-- Top Navbar Fragment -->
+            <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+            <div class="app-content">
+                <!-- Toast Flash Messages -->
+                <div th:if="${successMessage}" class="alert-custom alert-success-custom mb-4">
+                    <i class="bi bi-check-circle-fill fs-5"></i>
+                    <span th:text="${successMessage}">Operation completed successfully.</span>
+                </div>
+                <div th:if="${errorMessage}" class="alert-custom alert-danger-custom mb-4">
+                    <i class="bi bi-exclamation-octagon-fill fs-5"></i>
+                    <span th:text="${errorMessage}">An error occurred.</span>
+                </div>
+                <div th:if="${warningMessage}" class="alert-custom alert-warning-custom mb-4">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <span th:text="${warningMessage}">Warning message.</span>
+                </div>
+
+                <!-- Quick Action Toolbar (Admin & Librarian) -->
+                <div class="quick-actions-bar"
+                    th:if="${currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN'}">
+                    <span class="text-secondary small fw-semibold text-uppercase me-1">Quick Actions:</span>
+                    <a th:href="@{/issue-books}" class="quick-action-btn">
+                        <i class="bi bi-arrow-up-right-circle text-primary"></i> Issue Book
+                    </a>
+                    <a th:href="@{/return-books}" class="quick-action-btn">
+                        <i class="bi bi-arrow-down-left-circle text-success"></i> Return Book
+                    </a>
+                    <a th:href="@{/books}" class="quick-action-btn"
+                        th:if="${currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN'}">
+                        <i class="bi bi-plus-circle text-secondary"></i> Add New Book
+                    </a>
+                    <a th:href="@{/members}" class="quick-action-btn"
+                        th:if="${currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN'}">
+                        <i class="bi bi-person-plus text-info"></i> Register Member
+                    </a>
+                </div>
+
+                <!-- Dynamic Summary Metrics Cards -->
+                <div class="metrics-grid">
+                    <!-- 1. Total Titles -->
+                    <a th:href="@{/books}" class="text-decoration-none">
+                        <div class="metric-card">
+                            <div class="metric-data">
+                                <span class="metric-label">Total Titles</span>
+                                <span class="metric-value" th:text="${totalBooks}">0</span>
+                                <span class="metric-sub">Cataloged in database</span>
+                            </div>
+                            <div class="metric-icon-box icon-navy">
+                                <i class="bi bi-book-half"></i>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 2. Available Copies -->
+                    <a th:href="@{/books(availability='AVAILABLE')}" class="text-decoration-none">
+                        <div class="metric-card">
+                            <div class="metric-data">
+                                <span class="metric-label">Available Copies</span>
+                                <span class="metric-value text-success" th:text="${totalAvailableCopies}">0</span>
+                                <span class="metric-sub">Ready to borrow</span>
+                            </div>
+                            <div class="metric-icon-box icon-green">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 3. Issued Copies -->
+                    <a th:href="@{/transactions(status='ISSUED')}" class="text-decoration-none" th:if="${currentUser.role != 'MEMBER'}">
+                        <div class="metric-card">
+                            <div class="metric-data">
+                                <span class="metric-label">Issued Copies</span>
+                                <span class="metric-value text-primary" th:text="${totalIssuedCopies}">0</span>
+                                <span class="metric-sub">Currently with members</span>
+                            </div>
+                            <div class="metric-icon-box icon-blue">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="metric-card" th:if="${currentUser.role == 'MEMBER'}">
+                        <div class="metric-data">
+                            <span class="metric-label">Issued Copies</span>
+                            <span class="metric-value text-primary" th:text="${totalIssuedCopies}">0</span>
+                            <span class="metric-sub">Currently with members</span>
+                        </div>
+                        <div class="metric-icon-box icon-blue">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </div>
+                    </div>
+
+                    <!-- 4. Total Members -->
+                    <a th:href="@{/members}" class="text-decoration-none" th:if="${currentUser.role == 'ADMIN' or currentUser.role == 'LIBRARIAN'}">
+                        <div class="metric-card">
+                            <div class="metric-data">
+                                <span class="metric-label">Registered Members</span>
+                                <span class="metric-value" th:text="${totalMembers}">0</span>
+                                <span class="metric-sub">Active & deactivated</span>
+                            </div>
+                            <div class="metric-icon-box icon-navy">
+                                <i class="bi bi-people"></i>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="metric-card" th:if="${currentUser.role == 'MEMBER'}">
+                        <div class="metric-data">
+                            <span class="metric-label">Registered Members</span>
+                            <span class="metric-value" th:text="${totalMembers}">0</span>
+                            <span class="metric-sub">Community members</span>
+                        </div>
+                        <div class="metric-icon-box icon-navy">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+
+                    <!-- 5. Staff Librarians -->
+                    <a th:href="@{/librarians}" class="text-decoration-none" th:if="${currentUser.role == 'ADMIN'}">
+                        <div class="metric-card">
+                            <div class="metric-data">
+                                <span class="metric-label">Staff Librarians</span>
+                                <span class="metric-value" th:text="${totalLibrarians}">0</span>
+                                <span class="metric-sub">System operators</span>
+                            </div>
+                            <div class="metric-icon-box icon-navy">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="metric-card" th:if="${currentUser.role == 'LIBRARIAN'}">
+                        <div class="metric-data">
+                            <span class="metric-label">Staff Librarians</span>
+                            <span class="metric-value" th:text="${totalLibrarians}">0</span>
+                            <span class="metric-sub">System operators</span>
+                        </div>
+                        <div class="metric-icon-box icon-navy">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                    </div>
+
+                    <!-- 6. Overdue Loans -->
+                    <a th:href="@{/transactions(status='OVERDUE')}" class="text-decoration-none" th:if="${currentUser.role != 'MEMBER'}">
+                        <div class="metric-card">
+                            <div class="metric-data">
+                                <span class="metric-label">Overdue Loans</span>
+                                <span class="metric-value text-danger" th:text="${totalOverdue}">0</span>
+                                <span class="metric-sub">Subject to fine</span>
+                            </div>
+                            <div class="metric-icon-box icon-danger">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="metric-card" th:if="${currentUser.role == 'MEMBER'}">
+                        <div class="metric-data">
+                            <span class="metric-label">Overdue Loans</span>
+                            <span class="metric-value text-danger" th:text="${totalOverdue}">0</span>
+                            <span class="metric-sub">Subject to fine</span>
+                        </div>
+                        <div class="metric-icon-box icon-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEMBER SPECIFIC SECTION (When logged in as Member) -->
+                <div th:if="${currentUser.role == 'MEMBER'}" class="row mb-4">
+                    <div class="col-12">
+                        <div class="corporate-card">
+                            <div class="card-header-custom">
+                                <span class="card-title-custom">
+                                    <i class="bi bi-person-check text-primary"></i> My Active Loans & Due Dates
+                                </span>
+                                <span class="badge bg-primary"
+                                    th:text="${myActiveCount} + ' / 3 Books Borrowed'">0/3</span>
+                            </div>
+                            <div class="card-body-custom p-0">
+                                <div class="table-responsive-custom">
+                                    <table class="corporate-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Transaction ID</th>
+                                                <th>Book Title</th>
+                                                <th>ISBN</th>
+                                                <th>Issue Date</th>
+                                                <th>Due Date</th>
+                                                <th>Fine Due</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="txn : ${myActiveLoans}">
+                                                <td class="fw-bold" th:text="${txn.transactionId}">TXN0001</td>
+                                                <td th:text="${txn.bookTitle}">Book Title</td>
+                                                <td class="font-monospace small" th:text="${txn.isbn}">ISBN</td>
+                                                <td th:text="${txn.issueDate}">2026-01-01</td>
+                                                <td class="fw-semibold" th:text="${txn.dueDate}">2026-01-15</td>
+                                                <td>
+                                                    <span th:if="${txn.fineAmount > 0}" class="fw-bold text-danger">
+                                                        Rs. <span th:text="${#numbers.formatDecimal(txn.fineAmount, 1, 2)}">35.00</span>
+                                                    </span>
+                                                    <span th:unless="${txn.fineAmount > 0}" class="text-muted small">Rs. 0.00</span>
+                                                </td>
+                                                <td>
+                                                    <span class="status-badge"
+                                                        th:classappend="${txn.status == 'OVERDUE'} ? 'badge-overdue' : 'badge-issued'"
+                                                        th:text="${txn.status}">STATUS</span>
+                                                </td>
+                                            </tr>
+                                            <tr th:if="${myActiveLoans == null or myActiveLoans.empty}">
+                                                <td colspan="7" class="text-center text-muted py-4">
+                                                    You currently have no borrowed books. Visit the <a
+                                                        th:href="@{/books}">Books Catalog</a> to explore available
+                                                    titles!
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TWO COLUMN DASHBOARD: Recent Transactions & Recent Books -->
+                <div class="dashboard-grid">
+                    <!-- Column 1: Recent Transactions -->
+                    <div class="corporate-card">
+                        <div class="card-header-custom">
+                            <span class="card-title-custom">
+                                <i class="bi bi-clock-history text-secondary"></i> Recent Borrowing Activity
+                            </span>
+                            <a th:href="@{/transactions}" class="btn btn-sm btn-boeing-secondary py-1 px-2">
+                                View All <i class="bi bi-chevron-right ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body-custom p-0">
+                            <div class="table-responsive-custom">
+                                <table class="corporate-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Txn ID</th>
+                                            <th>Book</th>
+                                            <th>Member</th>
+                                            <th>Due Date</th>
+                                            <th>Fine / Due</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="txn : ${recentTransactions}">
+                                            <td class="fw-bold" th:text="${txn.transactionId}">TXN001</td>
+                                            <td th:text="${txn.bookTitle}">Book Title</td>
+                                            <td th:text="${txn.memberName}">Member</td>
+                                            <td th:text="${txn.dueDate}">Date</td>
+                                            <td>
+                                                <span th:if="${txn.fineAmount > 0}" class="fw-bold text-danger">
+                                                    Rs. <span th:text="${#numbers.formatDecimal(txn.fineAmount, 1, 2)}">35.00</span>
+                                                </span>
+                                                <span th:unless="${txn.fineAmount > 0}" class="text-muted small">Rs. 0.00</span>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge"
+                                                    th:classappend="${txn.status == 'RETURNED'} ? 'badge-returned' : (${txn.status == 'OVERDUE'} ? 'badge-overdue' : 'badge-issued')"
+                                                    th:text="${txn.status}">ACTIVE</span>
+                                            </td>
+                                        </tr>
+                                        <tr th:if="${recentTransactions.empty}">
+                                            <td colspan="6" class="text-center text-muted py-3">No transactions recorded
+                                                yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Recently Added Titles -->
+                    <div class="corporate-card">
+                        <div class="card-header-custom">
+                            <span class="card-title-custom">
+                                <i class="bi bi-bookmark-plus text-primary"></i> Recent Catalog Titles
+                            </span>
+                            <a th:href="@{/books}" class="btn btn-sm btn-boeing-secondary py-1 px-2">
+                                Browse <i class="bi bi-chevron-right ms-1"></i>
+                            </a>
+                        </div>
+                        <div class="card-body-custom p-0">
+                            <div class="table-responsive-custom">
+                                <table class="corporate-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Category</th>
+                                            <th>Available</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="book : ${recentBooks}">
+                                            <td>
+                                                <div class="fw-semibold text-truncate" style="max-width: 180px;"
+                                                    th:text="${book.title}">Book Title</div>
+                                                <small class="text-muted" th:text="${book.author}">Author</small>
+                                            </td>
+                                            <td><span class="badge bg-light text-dark border"
+                                                    th:text="${book.category}">Category</span></td>
+                                            <td>
+                                                <span class="fw-bold"
+                                                    th:classappend="${book.isAvailable()} ? 'text-success' : 'text-danger'"
+                                                    th:text="${book.availableCopies} + ' / ' + ${book.totalCopies}">0/0</span>
+                                            </td>
+                                        </tr>
+                                        <tr th:if="${recentBooks.empty}">
+                                            <td colspan="3" class="text-center text-muted py-3">No books added yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Fragment -->
+            <div th:replace="~{fragments/footer :: footer}"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+
+</html>
